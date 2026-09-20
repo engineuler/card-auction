@@ -339,3 +339,61 @@ a {
   color: var(--gold-bright);
   white-space: nowrap;
      }
+/* ---------- 판매글 작성 폼 (write.html) ---------- */
+
+.wrap--narrow {
+  max-width: 560px;
+}
+
+.form-card {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field__label {
+  font-size: 13px;
+  color: var(--text-sub);
+}
+
+.field__optional {
+  color: var(--text-faint);
+}
+
+.field__input {
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 14px;
+  padding: 10px 12px;
+}
+
+.field__input:focus {
+  border-color: var(--gold);
+  outline: none;
+}
+
+.field__textarea {
+  min-height: 90px;
+  resize: vertical;
+  font-family: var(--font-body);
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 4px;
+}
