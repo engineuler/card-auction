@@ -1,31 +1,30 @@
 /* ============================================
-   카드 경매 — 디자인 토큰
-   컨셉: 은밀한 카드 경매장 / 자정의 경매 목록
+   그림자 경매 — 카드 암시장
+   컨셉: 자정에 열리는 은밀한 카드 암시장 / 낡은 경매 장부
    ============================================ */
 
 :root {
-  --bg: #14161c;
-  --bg-raised: #191c24;
-  --surface: #1d212b;
-  --surface-hover: #232734;
-  --border: #2b2f3c;
-  --border-strong: #3a3f4f;
+  --bg: #15100b;
+  --surface: #201a12;
+  --surface-hover: #271f16;
+  --border: #423522;
+  --border-strong: #5a4a2f;
 
-  --text: #ecedf2;
-  --text-sub: #8b8fa3;
-  --text-faint: #565b6e;
+  --text: #e8ddc4;
+  --text-sub: #a89572;
+  --text-faint: #6b5d42;
 
-  --gold: #c9a227;
-  --gold-bright: #e3be4e;
-  --gold-dim: #7a6420;
+  --brass: #b8863f;
+  --brass-bright: #d9ad5f;
+  --brass-dim: #6e5326;
 
-  --danger: #b5533f;
+  --wine: #5c2027;
 
-  --font-display: "Fraunces", serif;
-  --font-body: "Inter", -apple-system, sans-serif;
+  --font-display: "Nanum Myeongjo", serif;
+  --font-body: "Noto Serif KR", serif;
 
-  --radius-sm: 3px;
-  --radius: 4px;
+  --radius-sm: 2px;
+  --radius: 3px;
 
   --ease: cubic-bezier(0.2, 0.7, 0.3, 1);
 }
@@ -41,15 +40,26 @@ body {
 }
 
 body {
-  background: var(--bg);
-  background-image:
-    radial-gradient(ellipse 900px 500px at 15% -10%, rgba(201, 162, 39, 0.06), transparent),
-    radial-gradient(ellipse 700px 500px at 100% 0%, rgba(201, 162, 39, 0.04), transparent);
+  background:
+    radial-gradient(ellipse 1100px 500px at 50% -15%, rgba(184, 134, 63, 0.12), transparent 60%),
+    radial-gradient(ellipse 900px 700px at 50% 115%, rgba(0, 0, 0, 0.55), transparent 60%),
+    var(--bg);
   color: var(--text);
   font-family: var(--font-body);
-  font-size: 15px;
-  line-height: 1.6;
+  font-size: 16px;
+  line-height: 1.75;
   min-height: 100vh;
+  position: relative;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.05;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
 }
 
 a {
@@ -63,19 +73,25 @@ a {
   max-width: 1080px;
   margin: 0 auto;
   padding: 0 24px 80px;
+  position: relative;
+}
+
+.wrap--narrow {
+  max-width: 560px;
 }
 
 .site-header {
-  padding: 48px 24px 32px;
+  padding: 44px 24px 30px;
   border-bottom: 1px solid var(--border);
   margin-bottom: 40px;
+  position: relative;
 }
 
 .site-header__inner {
   max-width: 1080px;
   margin: 0 auto;
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: 16px;
   flex-wrap: wrap;
@@ -83,49 +99,68 @@ a {
 
 .site-mark {
   display: flex;
-  align-items: baseline;
-  gap: 10px;
+  align-items: center;
+  gap: 14px;
 }
 
-.site-mark__lot {
-  font-family: var(--font-body);
-  font-size: 11px;
-  letter-spacing: 0.04em;
-  color: var(--gold-dim);
-  border: 1px solid var(--gold-dim);
-  border-radius: var(--radius-sm);
-  padding: 2px 6px;
+.site-mark__seal {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1.5px solid var(--brass-dim);
+  border-radius: 50%;
+  color: var(--brass);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 15px;
+  transform: rotate(-7deg);
+  opacity: 0.85;
 }
 
 .site-title {
   font-family: var(--font-display);
-  font-weight: 600;
-  font-style: italic;
-  font-size: 26px;
+  font-weight: 700;
+  font-size: 27px;
   color: var(--text);
   margin: 0;
+  letter-spacing: 0.01em;
 }
 
 .site-title em {
-  color: var(--gold-bright);
-  font-style: italic;
+  font-style: normal;
+  color: var(--brass-bright);
+  border-bottom: 1px solid var(--brass-dim);
+  padding-bottom: 1px;
+}
+
+.site-title small {
+  display: block;
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  color: var(--text-sub);
+  margin-top: 4px;
 }
 
 .site-tagline {
   color: var(--text-sub);
-  font-size: 13.5px;
-  margin: 0;
+  font-size: 14px;
+  margin: 4px 0 0;
 }
 
 .nav-links {
   display: flex;
-  gap: 20px;
-  font-size: 13.5px;
+  gap: 22px;
+  font-size: 14px;
   color: var(--text-sub);
 }
 
 .nav-links a:hover {
-  color: var(--gold-bright);
+  color: var(--brass-bright);
 }
 
 /* ---------- 섹션 헤더 ---------- */
@@ -134,21 +169,21 @@ a {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  margin-bottom: 24px;
+  margin-bottom: 26px;
   gap: 16px;
   flex-wrap: wrap;
 }
 
 .section-head h2 {
   font-family: var(--font-display);
-  font-weight: 500;
-  font-size: 20px;
+  font-weight: 700;
+  font-size: 22px;
   margin: 0 0 4px;
 }
 
 .section-head p {
   color: var(--text-sub);
-  font-size: 13px;
+  font-size: 14px;
   margin: 0;
 }
 
@@ -166,7 +201,7 @@ a {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 16px 14px 14px;
-  min-height: 92px;
+  min-height: 96px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -179,8 +214,8 @@ a {
   content: "";
   position: absolute;
   inset: 0;
-  border-top: 2px solid var(--gold-dim);
-  opacity: 0.6;
+  border-top: 2px solid var(--brass-dim);
+  opacity: 0.7;
   transition: border-color 0.18s var(--ease), opacity 0.18s var(--ease);
 }
 
@@ -191,25 +226,25 @@ a {
 }
 
 .job-card:hover::before {
-  border-color: var(--gold-bright);
+  border-color: var(--brass-bright);
   opacity: 1;
 }
 
 .job-card__index {
-  font-size: 10.5px;
-  color: var(--text-faint);
+  font-size: 12px;
   letter-spacing: 0.03em;
+  color: var(--text-faint);
 }
 
 .job-card__name {
   font-family: var(--font-display);
-  font-size: 17px;
-  font-weight: 500;
+  font-size: 19px;
+  font-weight: 700;
   color: var(--text);
 }
 
 .job-card__count {
-  font-size: 11.5px;
+  font-size: 12px;
   color: var(--text-sub);
 }
 
@@ -222,21 +257,21 @@ a {
   gap: 6px;
   border-radius: var(--radius-sm);
   border: 1px solid transparent;
-  padding: 10px 18px;
+  padding: 10px 20px;
   font-family: var(--font-body);
-  font-size: 13.5px;
+  font-size: 14.5px;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.15s var(--ease), border-color 0.15s var(--ease), color 0.15s var(--ease);
 }
 
 .btn--gold {
-  background: var(--gold);
-  color: #17140a;
+  background: var(--brass);
+  color: #16120a;
 }
 
 .btn--gold:hover {
-  background: var(--gold-bright);
+  background: var(--brass-bright);
 }
 
 .btn--ghost {
@@ -246,55 +281,29 @@ a {
 }
 
 .btn--ghost:hover {
-  border-color: var(--gold);
-  color: var(--gold-bright);
+  border-color: var(--brass);
+  color: var(--brass-bright);
 }
-
-/* ---------- 반응형 ---------- */
-
-@media (max-width: 560px) {
-  .site-header {
-    padding: 32px 16px 24px;
-  }
-  .wrap {
-    padding: 0 16px 60px;
-  }
-  .job-grid {
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  }
-}
-
-/* ---------- 접근성 ---------- */
-
-:focus-visible {
-  outline: 2px solid var(--gold-bright);
-  outline-offset: 2px;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  * {
-    transition: none !important;
-  }
-  }
 
 /* ---------- 빈 상태 ---------- */
 
 .empty-state {
   border: 1px dashed var(--border-strong);
   border-radius: var(--radius);
-  padding: 48px 24px;
+  padding: 52px 24px;
   text-align: center;
 }
 
 .empty-state__title {
   font-family: var(--font-display);
-  font-size: 16px;
+  font-weight: 700;
+  font-size: 18px;
   color: var(--text);
   margin: 0 0 6px;
 }
 
 .empty-state__desc {
-  font-size: 13px;
+  font-size: 13.5px;
   color: var(--text-sub);
   margin: 0;
 }
@@ -315,7 +324,7 @@ a {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 14px 16px;
+  padding: 15px 18px;
   transition: border-color 0.15s var(--ease), background 0.15s var(--ease);
 }
 
@@ -325,25 +334,23 @@ a {
 }
 
 .listing-item__seller {
-  font-weight: 600;
-  font-size: 14px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 16px;
 }
 
 .listing-item__qty {
-  font-size: 12.5px;
+  font-size: 13px;
   color: var(--text-sub);
 }
 
 .listing-item__offers {
-  font-size: 12.5px;
-  color: var(--gold-bright);
+  font-size: 13px;
+  color: var(--brass-bright);
   white-space: nowrap;
-     }
-/* ---------- 판매글 작성 폼 (write.html) ---------- */
-
-.wrap--narrow {
-  max-width: 560px;
 }
+
+/* ---------- 판매글 작성 폼 (write.html) ---------- */
 
 .form-card {
   display: flex;
@@ -352,7 +359,7 @@ a {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 24px;
+  padding: 28px;
 }
 
 .field {
@@ -362,7 +369,7 @@ a {
 }
 
 .field__label {
-  font-size: 13px;
+  font-size: 13.5px;
   color: var(--text-sub);
 }
 
@@ -371,17 +378,17 @@ a {
 }
 
 .field__input {
-  background: var(--bg-raised);
+  background: var(--bg);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   color: var(--text);
   font-family: var(--font-body);
-  font-size: 14px;
+  font-size: 15px;
   padding: 10px 12px;
 }
 
 .field__input:focus {
-  border-color: var(--gold);
+  border-color: var(--brass);
   outline: none;
 }
 
@@ -396,4 +403,31 @@ a {
   justify-content: flex-end;
   gap: 10px;
   margin-top: 4px;
+}
+
+/* ---------- 반응형 ---------- */
+
+@media (max-width: 560px) {
+  .site-header {
+    padding: 32px 16px 22px;
+  }
+  .wrap {
+    padding: 0 16px 60px;
+  }
+  .job-grid {
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  }
+}
+
+/* ---------- 접근성 ---------- */
+
+:focus-visible {
+  outline: 2px solid var(--brass-bright);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
 }
