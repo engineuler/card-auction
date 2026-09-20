@@ -68,13 +68,24 @@
   const presetJob = params.get("job");
 
   const jobSelect = document.getElementById("jobSelect");
-  JOBS.forEach((job) => {
+
+  if (presetJob && JOBS.includes(presetJob)) {
+    // 특정 직업 페이지에서 넘어온 경우 — 그 직업으로 고정, 다른 직업 선택 불가
     const opt = document.createElement("option");
-    opt.value = job;
-    opt.textContent = job;
-    if (job === presetJob) opt.selected = true;
+    opt.value = presetJob;
+    opt.textContent = presetJob;
+    opt.selected = true;
     jobSelect.appendChild(opt);
-  });
+    jobSelect.disabled = true;
+  } else {
+    // 직업 지정 없이 들어온 경우에만 전체 목록에서 선택 가능
+    JOBS.forEach((job) => {
+      const opt = document.createElement("option");
+      opt.value = job;
+      opt.textContent = job;
+      jobSelect.appendChild(opt);
+    });
+  }
 
   const form = document.getElementById("writeForm");
   const submitBtn = form.querySelector("button[type=submit]");
@@ -109,4 +120,4 @@
 </script>
 
 </body>
-  </html>
+        </html>
