@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>판매글 — 그림자 경매</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=Noto+Serif+KR:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<header class="site-header">
+  <div class="site-header__inner">
+    <div class="site-mark">
+      <span class="site-mark__seal">品</span>
+      <h1 class="site-title"><a href="index.html">그림자 <em>경매</em><small>카드 암시장</small></a></h1>
+    </div>
+    <nav class="nav-links">
+      <a href="index.html">전체 직업</a>
+      <a href="mypage.html">마이페이지</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap wrap--narrow">
+  <div id="listingDetail">
+    <div class="empty-state">
+      <p class="empty-state__title">불러오는 중...</p>
+    </div>
+  </div>
+
+  <div id="offerSection" style="display:none;">
+    <div class="section-head" style="margin-top:36px;">
+      <div>
+        <h2>들어온 제안</h2>
+        <p>들어온 순서대로 표시됩니다.</p>
+      </div>
+    </div>
+    <div id="offerList"></div>
+
+    <div class="section-head" style="margin-top:36px;">
+      <div>
+        <h2>제안하기</h2>
+        <p>내가 줄 카드와 엽서를 적어주세요.</p>
+      </div>
+    </div>
+    <form class="form-card" id="offerForm">
+      <label class="field">
+        <span class="field__label">내 이름</span>
+        <input class="field__input" id="offererName" type="text" placeholder="이름을 입력하세요" required />
+      </label>
+      <label class="field">
+        <span class="field__label">제안 내용</span>
+        <textarea class="field__input field__textarea" id="offerDesc" placeholder="예: 짐승인간 카드 1장 + 엽서 2장" required></textarea>
+      </label>
+      <div class="form-actions">
+        <button class="btn btn--gold" type="submit">제안 등록</button>
+      </div>
+    </form>
+  </div>
+</main>
+
+<script type="module">
+  import {
+    db,
+    doc,
+    getDoc,
+    collection,
+    addDoc,
+    query,
+    orderBy,
+    onSnapshot,
+    updateDoc,
+    increment,
+    serverTimestamp,
+  } from "./js/firebase-init.js";
+
+  const params = new URLSearchParams(window.location.search);
+  const listingId = params.get("id");
+
+  const detailEl = document.getElementById("listingDetail");
+  const offerSection = document.getElementById("offerSection");
+  const offerListEl = document.getElementById("offerList");
+
+  if (!listingId) {
+    detailEl.innerHTML = `
+      <div class="empty-state">
+        <p class="empty-state__title">잘못된 접근입니다.</p>
+        <p class="empty-state__desc">판매글 목록에서 다시 들어와 주세요.</p>
+      </div>
+    `;
+  } else {
+    const listingRef = doc(db, "auctionListings", listingId);
+
+    getDoc(listingRef)
+      .then((snap) => {
+        if (!snap.exists()) {
+          detailEl.innerHTML = `
+            <div class="empty-state">
+              <p class="empty-state__title">판매글을 찾을 수 없습니다.</p>
+              <p class="empty-state__desc">삭제되었거나 존재하지 않는 글입니다.</p>
+            </div>
+          `;
+          return;
+        }
+
+        const data = snap.data();
+        document.title = `${data.job} 판매글 — 그림자 경매`;
+
+        detailEl.innerHTML = `
+          <div class="section-head">
+            <div>
+              <h2>${data.job}</h2>
+              <p>판매자 ${data.sellerName || "익명"}</p>
+            </div>
+          </div>
+          <div class="form-card">
+            <div class="field">
+              <span class="field__label">판매 수량</span>
+              <div>${data.qty ?? "?"}장</div>
+            </div>
+            <div class="field">
+              <span class="field__label">원하는 조건</span>
+              <div>${data.condition ? data.condition : "특별한 조건 없음"}</div>
+            </div>
+          </div>
+        `;
+
+        offerSection.style.display = "block";
+
+        // 제안 목록 실시간 표시
+        const offersQuery = query(
+          collection(db, "auctionListings", listingId, "offers"),
+          orderBy("createdAt", "asc")
+        );
+
+        onSnapshot(offersQuery, (snapshot) => {
+          if (snapshot.empty) {
+            offerListEl.innerHTML = `
+              <div class="empty-state">
+                <p class="empty-state__title">아직 들어온 제안이 없습니다.</p>
+                <p class="empty-state__desc">첫 제안을 걸어보세요.</p>
+              </div>
+            `;
+            return;
+          }
+
+          const list = document.createElement("div");
+          list.className = "listing-list";
+
+          snapshot.forEach((offerSnap) => {
+            const offer = offerSnap.data();
+            const item = document.createElement("div");
+            item.className = "listing-item";
+            item.innerHTML = `
+              <div>
+                <div class="listing-item__seller">${offer.offererName || "익명"}</div>
+                <div class="listing-item__qty">${offer.offerDesc || ""}</div>
+              </div>
+            `;
+            list.appendChild(item);
+          });
+
+          offerListEl.innerHTML = "";
+          offerListEl.appendChild(list);
+        });
+
+        // 제안 등록
+        const offerForm = document.getElementById("offerForm");
+        const submitBtn = offerForm.querySelector("button[type=submit]");
+
+        offerForm.addEventListener("submit", async (e) => {
+          e.preventDefault();
+          submitBtn.disabled = true;
+          submitBtn.textContent = "등록 중...";
+
+          const offererName = document.getElementById("offererName").value.trim();
+          const offerDesc = document.getElementById("offerDesc").value.trim();
+
+          try {
+            await addDoc(collection(db, "auctionListings", listingId, "offers"), {
+              offererName,
+              offerDesc,
+              createdAt: serverTimestamp(),
+            });
+            await updateDoc(listingRef, { offerCount: increment(1) });
+            offerForm.reset();
+          } catch (err) {
+            console.error(err);
+            alert("제안 등록 중 오류가 발생했습니다: " + err.message);
+          } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = "제안 등록";
+          }
+        });
+      })
+      .catch((err) => {
+        console.error(err);
+        detailEl.innerHTML = `
+          <div class="empty-state">
+            <p class="empty-state__title">불러오지 못했습니다.</p>
+            <p class="empty-state__desc">${err.message}</p>
+          </div>
+        `;
+      });
+  }
+</script>
+
+</body>
+  </html>
