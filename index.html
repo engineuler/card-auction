@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>야시장 — 카드 경매</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;0,600;1,500;1,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<header class="site-header">
+  <div class="site-header__inner">
+    <div>
+      <div class="site-mark">
+        <span class="site-mark__lot">LOT</span>
+        <h1 class="site-title">야시장 — <em>카드 경매</em></h1>
+      </div>
+      <p class="site-tagline">직업 카드를 내놓고, 원하는 카드를 위해 엽서를 얹어보세요.</p>
+    </div>
+    <nav class="nav-links">
+      <a href="mypage.html">마이페이지</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="section-head">
+    <div>
+      <h2>직업별 경매장</h2>
+      <p>원하는 직업을 골라 판매글을 둘러보세요.</p>
+    </div>
+  </div>
+
+  <div class="job-grid" id="jobGrid"></div>
+</main>
+
+<script type="module">
+  import { JOBS } from "./data/jobs.js";
+
+  const grid = document.getElementById("jobGrid");
+
+  JOBS.forEach((job, i) => {
+    const card = document.createElement("a");
+    card.className = "job-card";
+    card.href = `list.html?job=${encodeURIComponent(job)}`;
+    card.innerHTML = `
+      <span class="job-card__index">No. ${String(i + 1).padStart(2, "0")}</span>
+      <span class="job-card__name">${job}</span>
+      <span class="job-card__count">판매글 0건</span>
+    `;
+    grid.appendChild(card);
+  });
+</script>
+
+</body>
+</html>
