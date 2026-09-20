@@ -431,3 +431,9 @@ a {
     transition: none !important;
   }
 }
+/* ---------- 잠긴 입력 필드 ---------- */
+
+.field__input:disabled {
+  opacity: 0.75;
+  cursor: not-allowed;
+}
