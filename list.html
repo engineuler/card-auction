@@ -3,22 +3,19 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>직업별 경매장 — 카드 경매</title>
+<title>직업별 경매장 — 그림자 경매</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;0,600;1,500;1,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=Noto+Serif+KR:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
 
 <header class="site-header">
   <div class="site-header__inner">
-    <div>
-      <div class="site-mark">
-        <span class="site-mark__lot">LOT</span>
-        <h1 class="site-title"><a href="index.html">야시장 — <em>카드 경매</em></a></h1>
-      </div>
-      <p class="site-tagline" id="jobTagline">직업 판매글 목록</p>
+    <div class="site-mark">
+      <span class="site-mark__seal">品</span>
+      <h1 class="site-title"><a href="index.html">그림자 <em>경매</em><small>카드 암시장</small></a></h1>
     </div>
     <nav class="nav-links">
       <a href="index.html">전체 직업</a>
@@ -38,23 +35,74 @@
 
   <div id="listingArea">
     <div class="empty-state">
-      <p class="empty-state__title">아직 등록된 판매글이 없습니다.</p>
-      <p class="empty-state__desc">이 직업의 첫 판매자가 되어보세요.</p>
+      <p class="empty-state__title">불러오는 중...</p>
     </div>
   </div>
 </main>
 
 <script type="module">
+  import { db, collection, query, where, orderBy, onSnapshot } from "./js/firebase-init.js";
+
   const params = new URLSearchParams(window.location.search);
   const job = params.get("job") || "직업 미상";
 
-  document.title = `${job} — 카드 경매`;
+  document.title = `${job} — 그림자 경매`;
   document.getElementById("jobTitle").textContent = job;
-  document.getElementById("jobTagline").textContent = `${job} 판매글 목록`;
   document.getElementById("writeLink").href = `write.html?job=${encodeURIComponent(job)}`;
 
-  // TODO: Firestore 연동 후 이 자리에서 판매글 목록을 불러와 렌더링
+  const listingArea = document.getElementById("listingArea");
+
+  const q = query(
+    collection(db, "auctionListings"),
+    where("job", "==", job),
+    orderBy("createdAt", "desc")
+  );
+
+  onSnapshot(
+    q,
+    (snapshot) => {
+      if (snapshot.empty) {
+        listingArea.innerHTML = `
+          <div class="empty-state">
+            <p class="empty-state__title">아직 등록된 판매글이 없습니다.</p>
+            <p class="empty-state__desc">이 직업의 첫 판매자가 되어보세요.</p>
+          </div>
+        `;
+        return;
+      }
+
+      const list = document.createElement("div");
+      list.className = "listing-list";
+
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        const item = document.createElement("a");
+        item.className = "listing-item";
+        item.href = `detail.html?id=${docSnap.id}`;
+        item.innerHTML = `
+          <div>
+            <div class="listing-item__seller">${data.sellerName || "익명"}</div>
+            <div class="listing-item__qty">판매 수량 ${data.qty ?? "?"}장</div>
+          </div>
+          <div class="listing-item__offers">제안 ${data.offerCount ?? 0}건</div>
+        `;
+        list.appendChild(item);
+      });
+
+      listingArea.innerHTML = "";
+      listingArea.appendChild(list);
+    },
+    (err) => {
+      console.error(err);
+      listingArea.innerHTML = `
+        <div class="empty-state">
+          <p class="empty-state__title">목록을 불러오지 못했습니다.</p>
+          <p class="empty-state__desc">${err.message}</p>
+        </div>
+      `;
+    }
+  );
 </script>
 
 </body>
-  </html>
+</html>
