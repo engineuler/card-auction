@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>판매글 등록 — 카드 경매</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;0,600;1,500;1,600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<header class="site-header">
+  <div class="site-header__inner">
+    <div>
+      <div class="site-mark">
+        <span class="site-mark__lot">LOT</span>
+        <h1 class="site-title"><a href="index.html">야시장 — <em>카드 경매</em></a></h1>
+      </div>
+      <p class="site-tagline" id="jobTagline">판매글 등록</p>
+    </div>
+    <nav class="nav-links">
+      <a href="index.html">전체 직업</a>
+      <a href="mypage.html">마이페이지</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap wrap--narrow">
+  <div class="section-head">
+    <div>
+      <h2 id="jobTitle">판매글 등록</h2>
+      <p>팔 카드 정보를 입력하세요.</p>
+    </div>
+  </div>
+
+  <form class="form-card" id="writeForm">
+    <label class="field">
+      <span class="field__label">직업</span>
+      <select class="field__input" id="jobSelect" required></select>
+    </label>
+
+    <label class="field">
+      <span class="field__label">판매 수량</span>
+      <input class="field__input" id="qty" type="number" min="1" value="1" required />
+    </label>
+
+    <label class="field">
+      <span class="field__label">판매자 이름</span>
+      <input class="field__input" id="sellerName" type="text" placeholder="이름을 입력하세요" required />
+    </label>
+
+    <label class="field">
+      <span class="field__label">원하는 조건 <span class="field__optional">(선택)</span></span>
+      <textarea class="field__input field__textarea" id="condition" placeholder="예: 청부업자 카드 우대, 엽서 추가 환영"></textarea>
+    </label>
+
+    <div class="form-actions">
+      <a class="btn btn--ghost" href="index.html">취소</a>
+      <button class="btn btn--gold" type="submit">판매글 등록</button>
+    </div>
+  </form>
+</main>
+
+<script type="module">
+  import { JOBS } from "./data/jobs.js";
+
+  const params = new URLSearchParams(window.location.search);
+  const presetJob = params.get("job");
+
+  const jobSelect = document.getElementById("jobSelect");
+  JOBS.forEach((job) => {
+    const opt = document.createElement("option");
+    opt.value = job;
+    opt.textContent = job;
+    if (job === presetJob) opt.selected = true;
+    jobSelect.appendChild(opt);
+  });
+
+  document.getElementById("writeForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    // TODO: Firestore 연동 후 실제 저장 로직 연결
+    alert("등록 기능은 다음 단계(백엔드 연결)에서 활성화됩니다.");
+  });
+</script>
+
+</body>
+    </html>
