@@ -36,8 +36,10 @@
 
 <script type="module">
   import { JOBS } from "./data/jobs.js";
+  import { db, collection, onSnapshot } from "./js/firebase-init.js";
 
   const grid = document.getElementById("jobGrid");
+  const countEls = {};
 
   JOBS.forEach((job, i) => {
     const card = document.createElement("a");
@@ -49,6 +51,21 @@
       <span class="job-card__count">판매글 0건</span>
     `;
     grid.appendChild(card);
+    countEls[job] = card.querySelector(".job-card__count");
+  });
+
+  // 직업별 실제 판매글 개수를 실시간으로 집계
+  onSnapshot(collection(db, "auctionListings"), (snapshot) => {
+    const counts = {};
+    snapshot.forEach((docSnap) => {
+      const job = docSnap.data().job;
+      counts[job] = (counts[job] || 0) + 1;
+    });
+    JOBS.forEach((job) => {
+      if (countEls[job]) {
+        countEls[job].textContent = `판매글 ${counts[job] || 0}건`;
+      }
+    });
   });
 </script>
 
