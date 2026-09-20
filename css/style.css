@@ -276,3 +276,66 @@ a {
     transition: none !important;
   }
   }
+
+/* ---------- 빈 상태 ---------- */
+
+.empty-state {
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius);
+  padding: 48px 24px;
+  text-align: center;
+}
+
+.empty-state__title {
+  font-family: var(--font-display);
+  font-size: 16px;
+  color: var(--text);
+  margin: 0 0 6px;
+}
+
+.empty-state__desc {
+  font-size: 13px;
+  color: var(--text-sub);
+  margin: 0;
+}
+
+/* ---------- 판매글 목록 (list.html) ---------- */
+
+.listing-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.listing-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  transition: border-color 0.15s var(--ease), background 0.15s var(--ease);
+}
+
+.listing-item:hover {
+  border-color: var(--border-strong);
+  background: var(--surface-hover);
+}
+
+.listing-item__seller {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.listing-item__qty {
+  font-size: 12.5px;
+  color: var(--text-sub);
+}
+
+.listing-item__offers {
+  font-size: 12.5px;
+  color: var(--gold-bright);
+  white-space: nowrap;
+     }
