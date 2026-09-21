@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>마이페이지 — 그림자 경매</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700;800&family=Noto+Serif+KR:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<header class="site-header">
+  <div class="site-header__inner">
+    <div class="site-mark">
+      <span class="site-mark__seal">品</span>
+      <h1 class="site-title"><a href="index.html">그림자 <em>경매</em><small>카드 암시장</small></a></h1>
+    </div>
+    <nav class="nav-links">
+      <a href="index.html">전체 직업</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap wrap--narrow">
+
+  <!-- 로그아웃 상태: 로그인/회원가입 -->
+  <div id="authArea">
+    <div class="auth-tabs">
+      <button class="auth-tab is-active" id="tabLogin" type="button">로그인</button>
+      <button class="auth-tab" id="tabSignup" type="button">회원가입</button>
+    </div>
+
+    <form class="form-card" id="loginForm">
+      <label class="field">
+        <span class="field__label">이메일</span>
+        <input class="field__input" id="loginEmail" type="email" required />
+      </label>
+      <label class="field">
+        <span class="field__label">비밀번호</span>
+        <input class="field__input" id="loginPassword" type="password" required />
+      </label>
+      <div class="form-actions">
+        <button class="btn btn--gold" type="submit">로그인</button>
+      </div>
+    </form>
+
+    <form class="form-card" id="signupForm" style="display:none;">
+      <label class="field">
+        <span class="field__label">게임 아이디</span>
+        <input class="field__input" id="signupGameId" type="text" placeholder="마피아42 게임 내 아이디" required />
+      </label>
+      <label class="field">
+        <span class="field__label">이메일</span>
+        <input class="field__input" id="signupEmail" type="email" required />
+      </label>
+      <label class="field">
+        <span class="field__label">비밀번호</span>
+        <input class="field__input" id="signupPassword" type="password" minlength="6" required />
+      </label>
+      <div class="form-actions">
+        <button class="btn btn--gold" type="submit">가입하기</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- 로그인 상태 -->
+  <div id="accountArea" style="display:none;">
+    <div class="section-head">
+      <div>
+        <h2 id="greeting">-</h2>
+        <p>그림자 경매에 로그인되어 있습니다.</p>
+      </div>
+    </div>
+    <div class="form-actions" style="justify-content:flex-start;">
+      <button class="btn btn--ghost" id="logoutBtn" type="button">로그아웃</button>
+    </div>
+  </div>
+
+</main>
+
+<script type="module">
+  import {
+    db,
+    auth,
+    doc,
+    getDoc,
+    setDoc,
+    serverTimestamp,
+    onAuthStateChanged,
+    createUserWithEmailAndPassword,
+    signInWithEmailAndPassword,
+    signOut,
+  } from "./js/firebase-init.js";
+
+  const authArea = document.getElementById("authArea");
+  const accountArea = document.getElementById("accountArea");
+  const greeting = document.getElementById("greeting");
+
+  const tabLogin = document.getElementById("tabLogin");
+  const tabSignup = document.getElementById("tabSignup");
+  const loginForm = document.getElementById("loginForm");
+  const signupForm = document.getElementById("signupForm");
+
+  tabLogin.addEventListener("click", () => {
+    tabLogin.classList.add("is-active");
+    tabSignup.classList.remove("is-active");
+    loginForm.style.display = "flex";
+    signupForm.style.display = "none";
+  });
+
+  tabSignup.addEventListener("click", () => {
+    tabSignup.classList.add("is-active");
+    tabLogin.classList.remove("is-active");
+    signupForm.style.display = "flex";
+    loginForm.style.display = "none";
+  });
+
+  loginForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const email = document.getElementById("loginEmail").value.trim();
+    const password = document.getElementById("loginPassword").value;
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+    } catch (err) {
+      alert("로그인 실패: " + err.message);
+    }
+  });
+
+  signupForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const gameId = document.getElementById("signupGameId").value.trim();
+    const email = document.getElementById("signupEmail").value.trim();
+    const password = document.getElementById("signupPassword").value;
+    try {
+      const cred = await createUserWithEmailAndPassword(auth, email, password);
+      await setDoc(doc(db, "users", cred.user.uid), {
+        gameId,
+        email,
+        createdAt: serverTimestamp(),
+      });
+    } catch (err) {
+      alert("회원가입 실패: " + err.message);
+    }
+  });
+
+  document.getElementById("logoutBtn").addEventListener("click", () => {
+    signOut(auth);
+  });
+
+  onAuthStateChanged(auth, async (user) => {
+    if (user) {
+      authArea.style.display = "none";
+      accountArea.style.display = "block";
+      const userSnap = await getDoc(doc(db, "users", user.uid));
+      const gameId = userSnap.exists() ? userSnap.data().gameId : user.email;
+      greeting.textContent = `${gameId} 님`;
+    } else {
+      authArea.style.display = "block";
+      accountArea.style.display = "none";
+    }
+  });
+</script>
+
+</body>
+  </html>
