@@ -73,6 +73,20 @@
         <p>그림자 경매에 로그인되어 있습니다.</p>
       </div>
     </div>
+
+    <div id="gameIdSetup" style="display:none;">
+      <div class="notice">카드 경매에서 쓸 <strong>게임 아이디</strong>가 아직 없습니다. 스파이 사이트 계정으로 로그인하신 경우 여기서 한 번만 설정해주세요.</div>
+      <form class="form-card" id="gameIdForm">
+        <label class="field">
+          <span class="field__label">게임 아이디</span>
+          <input class="field__input" id="gameIdInput" type="text" placeholder="마피아42 게임 내 아이디" required />
+        </label>
+        <div class="form-actions">
+          <button class="btn btn--gold" type="submit">저장</button>
+        </div>
+      </form>
+    </div>
+
     <div class="form-actions" style="justify-content:flex-start;">
       <button class="btn btn--ghost" id="logoutBtn" type="button">로그아웃</button>
     </div>
@@ -149,13 +163,41 @@
     signOut(auth);
   });
 
+  const gameIdSetup = document.getElementById("gameIdSetup");
+  const gameIdForm = document.getElementById("gameIdForm");
+  let activeUid = null;
+
+  gameIdForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (!activeUid) return;
+    const gameId = document.getElementById("gameIdInput").value.trim();
+    try {
+      await setDoc(
+        doc(db, "users", activeUid),
+        { gameId, email: auth.currentUser.email, createdAt: serverTimestamp() },
+        { merge: true }
+      );
+      greeting.textContent = `${gameId} 님`;
+      gameIdSetup.style.display = "none";
+    } catch (err) {
+      alert("저장 실패: " + err.message);
+    }
+  });
+
   onAuthStateChanged(auth, async (user) => {
     if (user) {
       authArea.style.display = "none";
       accountArea.style.display = "block";
+      activeUid = user.uid;
       const userSnap = await getDoc(doc(db, "users", user.uid));
-      const gameId = userSnap.exists() ? userSnap.data().gameId : user.email;
-      greeting.textContent = `${gameId} 님`;
+      const userData = userSnap.exists() ? userSnap.data() : {};
+      if (userData.gameId) {
+        greeting.textContent = `${userData.gameId} 님`;
+        gameIdSetup.style.display = "none";
+      } else {
+        greeting.textContent = `${user.email} 님`;
+        gameIdSetup.style.display = "block";
+      }
     } else {
       authArea.style.display = "block";
       accountArea.style.display = "none";
@@ -164,4 +206,4 @@
 </script>
 
 </body>
-  </html>
+          </html>
