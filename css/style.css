@@ -431,9 +431,110 @@ a {
     transition: none !important;
   }
 }
+
 /* ---------- 잠긴 입력 필드 ---------- */
 
 .field__input:disabled {
   opacity: 0.75;
   cursor: not-allowed;
 }
+
+/* ---------- 로그인/회원가입 탭 ---------- */
+
+.auth-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.auth-tab {
+  flex: 1;
+  padding: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--text-sub);
+  font-family: var(--font-body);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.auth-tab.is-active {
+  border-color: var(--brass);
+  color: var(--brass-bright);
+}
+
+/* ---------- 상태 배지 ---------- */
+
+.badge {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: var(--radius-sm);
+  font-size: 11.5px;
+  border: 1px solid var(--border-strong);
+  color: var(--text-sub);
+}
+
+.badge--closed {
+  border-color: var(--wine);
+  color: #cf8a8a;
+}
+
+/* ---------- 낙찰 배너 & 버튼 ---------- */
+
+.winner-banner {
+  background: var(--surface);
+  border: 1px solid var(--brass-dim);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  margin-bottom: 20px;
+}
+
+.winner-banner strong {
+  color: var(--brass-bright);
+}
+
+.offer-pick-btn {
+  flex-shrink: 0;
+  padding: 6px 12px;
+  font-size: 12.5px;
+}
+
+/* ---------- 로그인 필요 안내 ---------- */
+
+.login-prompt {
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius);
+  padding: 36px 24px;
+  text-align: center;
+}
+
+.login-prompt a {
+  color: var(--brass-bright);
+  text-decoration: underline;
+}
+
+/* ---------- 경고 안내 ---------- */
+
+.notice {
+  border: 1px solid var(--wine);
+  background: rgba(92, 32, 39, 0.15);
+  border-radius: var(--radius);
+  padding: 14px 18px;
+  font-size: 13.5px;
+  color: var(--text-sub);
+  margin-bottom: 20px;
+}
+
+/* ---------- 제안 수정/삭제 버튼 ---------- */
+
+.offer-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.offer-actions .btn {
+  padding: 6px 10px;
+  font-size: 12px;
+   }
