@@ -40,31 +40,38 @@
     </div>
     <div id="offerList"></div>
 
-    <div class="section-head" style="margin-top:36px;">
-      <div>
-        <h2>제안하기</h2>
-        <p>내가 줄 카드와 엽서를 적어주세요.</p>
+    <div id="offerFormArea" style="margin-top:36px;">
+      <div class="section-head">
+        <div>
+          <h2>제안하기</h2>
+          <p>내가 줄 카드와 엽서를 적어주세요.</p>
+        </div>
       </div>
+      <div id="offerLoginPrompt" class="login-prompt" style="display:none;">
+        <p class="empty-state__title">로그인이 필요합니다.</p>
+        <p class="empty-state__desc"><a href="mypage.html">마이페이지에서 로그인 / 회원가입</a> 후 제안할 수 있습니다.</p>
+      </div>
+      <form class="form-card" id="offerForm" style="display:none;">
+        <label class="field">
+          <span class="field__label">제안자</span>
+          <div class="field__input" id="offererDisplay" style="opacity:0.85;">-</div>
+        </label>
+        <label class="field">
+          <span class="field__label">제안 내용</span>
+          <textarea class="field__input field__textarea" id="offerDesc" placeholder="예: 짐승인간 카드 1장 + 엽서 2장" required></textarea>
+        </label>
+        <div class="form-actions">
+          <button class="btn btn--gold" type="submit">제안 등록</button>
+        </div>
+      </form>
     </div>
-    <form class="form-card" id="offerForm">
-      <label class="field">
-        <span class="field__label">내 이름</span>
-        <input class="field__input" id="offererName" type="text" placeholder="이름을 입력하세요" required />
-      </label>
-      <label class="field">
-        <span class="field__label">제안 내용</span>
-        <textarea class="field__input field__textarea" id="offerDesc" placeholder="예: 짐승인간 카드 1장 + 엽서 2장" required></textarea>
-      </label>
-      <div class="form-actions">
-        <button class="btn btn--gold" type="submit">제안 등록</button>
-      </div>
-    </form>
   </div>
 </main>
 
 <script type="module">
   import {
     db,
+    auth,
     doc,
     getDoc,
     collection,
@@ -73,8 +80,10 @@
     orderBy,
     onSnapshot,
     updateDoc,
+    deleteDoc,
     increment,
     serverTimestamp,
+    onAuthStateChanged,
   } from "./js/firebase-init.js";
 
   const params = new URLSearchParams(window.location.search);
@@ -83,6 +92,49 @@
   const detailEl = document.getElementById("listingDetail");
   const offerSection = document.getElementById("offerSection");
   const offerListEl = document.getElementById("offerList");
+  const offerLoginPrompt = document.getElementById("offerLoginPrompt");
+  const offerForm = document.getElementById("offerForm");
+  const offererDisplay = document.getElementById("offererDisplay");
+
+  let currentUser = null;
+  let currentGameId = null;
+  let isAdmin = false;
+  let listingData = null;
+  let editingOfferId = null;
+
+  function renderOfferFormState() {
+    if (!listingData) return;
+    if (listingData.status === "closed") {
+      offerLoginPrompt.style.display = "none";
+      offerForm.style.display = "none";
+      return;
+    }
+    if (currentUser) {
+      offerLoginPrompt.style.display = "none";
+      offerForm.style.display = "flex";
+      offererDisplay.textContent = currentGameId;
+    } else {
+      offerLoginPrompt.style.display = "block";
+      offerForm.style.display = "none";
+    }
+  }
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) {
+      currentUser = null;
+      currentGameId = null;
+      isAdmin = false;
+    } else {
+      currentUser = user;
+      const userSnap = await getDoc(doc(db, "users", user.uid));
+      const userData = userSnap.exists() ? userSnap.data() : {};
+      currentGameId = userData.gameId || user.email;
+      isAdmin = !!userData.isAdmin;
+    }
+    renderOfferFormState();
+    if (listingData) renderDetail();
+    renderOffersList(latestOffers);
+  });
 
   if (!listingId) {
     detailEl.innerHTML = `
@@ -93,9 +145,182 @@
     `;
   } else {
     const listingRef = doc(db, "auctionListings", listingId);
+    let latestOffers = [];
 
-    getDoc(listingRef)
-      .then((snap) => {
+    function renderDetail() {
+      const data = listingData;
+      document.title = `${data.job} 판매글 — 그림자 경매`;
+      const closed = data.status === "closed";
+      const sellerName = data.sellerGameId || data.sellerName || "익명";
+
+      detailEl.innerHTML = `
+        ${closed ? `<div class="winner-banner">낙찰 완료 — <strong>${data.winnerGameId || "?"}</strong> 님에게 낙찰되었습니다.</div>` : ""}
+        <div class="section-head">
+          <div>
+            <h2>${data.job} ${closed ? '<span class="badge badge--closed">마감</span>' : ""}</h2>
+            <p>판매자 ${sellerName}</p>
+          </div>
+        </div>
+        <div class="form-card">
+          <div class="field">
+            <span class="field__label">판매 수량</span>
+            <div>${data.qty ?? "?"}장</div>
+          </div>
+          <div class="field">
+            <span class="field__label">원하는 조건</span>
+            <div>${data.condition ? data.condition : "특별한 조건 없음"}</div>
+          </div>
+        </div>
+      `;
+
+      if (isAdmin) {
+        const adminBar = document.createElement("div");
+        adminBar.className = "form-actions";
+        adminBar.style.justifyContent = "flex-start";
+        adminBar.style.marginTop = "10px";
+        const delBtn = document.createElement("button");
+        delBtn.className = "btn btn--ghost";
+        delBtn.type = "button";
+        delBtn.textContent = "삭제 (관리자)";
+        delBtn.addEventListener("click", async () => {
+          if (!confirm("이 판매글을 삭제하시겠습니까? (관리자 권한)")) return;
+          try {
+            await deleteDoc(listingRef);
+            window.location.href = "index.html";
+          } catch (err) {
+            alert("삭제 중 오류: " + err.message);
+          }
+        });
+        adminBar.appendChild(delBtn);
+        detailEl.appendChild(adminBar);
+      }
+    }
+
+    function renderOffersList(offers) {
+      latestOffers = offers;
+      if (!listingData) return;
+
+      const isSeller = currentUser && currentUser.uid === listingData.sellerUid;
+      const closed = listingData.status === "closed";
+
+      if (offers.length === 0) {
+        offerListEl.innerHTML = `
+          <div class="empty-state">
+            <p class="empty-state__title">아직 들어온 제안이 없습니다.</p>
+            <p class="empty-state__desc">첫 제안을 걸어보세요.</p>
+          </div>
+        `;
+        return;
+      }
+
+      const list = document.createElement("div");
+      list.className = "listing-list";
+
+      offers.forEach((offer) => {
+        const item = document.createElement("div");
+        item.className = "listing-item";
+        const isWinner = closed && offer.id === listingData.winnerOfferId;
+        const isMine = currentUser && offer.offererUid === currentUser.uid;
+
+        if (editingOfferId === offer.id) {
+          // 수정 모드
+          item.innerHTML = `
+            <div style="width:100%;display:flex;flex-direction:column;gap:8px;">
+              <div class="listing-item__seller">${offer.offererGameId || "익명"}</div>
+              <textarea class="field__input field__textarea" id="editDesc-${offer.id}">${offer.offerDesc || ""}</textarea>
+              <div class="offer-actions">
+                <button class="btn btn--gold" data-action="save" data-id="${offer.id}">저장</button>
+                <button class="btn btn--ghost" data-action="cancel">취소</button>
+              </div>
+            </div>
+          `;
+          item.querySelector('[data-action="save"]').addEventListener("click", async () => {
+            const newDesc = document.getElementById(`editDesc-${offer.id}`).value.trim();
+            try {
+              await updateDoc(doc(db, "auctionListings", listingId, "offers", offer.id), {
+                offerDesc: newDesc,
+              });
+              editingOfferId = null;
+            } catch (err) {
+              alert("수정 중 오류: " + err.message);
+            }
+          });
+          item.querySelector('[data-action="cancel"]').addEventListener("click", () => {
+            editingOfferId = null;
+            renderOffersList(latestOffers);
+          });
+        } else {
+          item.innerHTML = `
+            <div>
+              <div class="listing-item__seller">${offer.offererGameId || offer.offererName || "익명"} ${isWinner ? '<span class="badge">낙찰</span>' : ""}</div>
+              <div class="listing-item__qty">${offer.offerDesc || ""}</div>
+            </div>
+          `;
+
+          if (isSeller && !closed) {
+            const pickBtn = document.createElement("button");
+            pickBtn.className = "btn btn--ghost offer-pick-btn";
+            pickBtn.type = "button";
+            pickBtn.textContent = "낙찰하기";
+            pickBtn.addEventListener("click", async () => {
+              if (!confirm(`${offer.offererGameId || "이 제안"}에게 낙찰하시겠습니까?`)) return;
+              try {
+                await updateDoc(listingRef, {
+                  status: "closed",
+                  winnerOfferId: offer.id,
+                  winnerGameId: offer.offererGameId || offer.offererName || "익명",
+                  closedAt: serverTimestamp(),
+                });
+              } catch (err) {
+                alert("낙찰 처리 중 오류: " + err.message);
+              }
+            });
+            item.appendChild(pickBtn);
+          }
+
+          if (isMine && !closed) {
+            const actions = document.createElement("div");
+            actions.className = "offer-actions";
+
+            const editBtn = document.createElement("button");
+            editBtn.className = "btn btn--ghost";
+            editBtn.type = "button";
+            editBtn.textContent = "수정";
+            editBtn.addEventListener("click", () => {
+              editingOfferId = offer.id;
+              renderOffersList(latestOffers);
+            });
+
+            const delBtn = document.createElement("button");
+            delBtn.className = "btn btn--ghost";
+            delBtn.type = "button";
+            delBtn.textContent = "삭제";
+            delBtn.addEventListener("click", async () => {
+              if (!confirm("이 제안을 삭제하시겠습니까?")) return;
+              try {
+                await deleteDoc(doc(db, "auctionListings", listingId, "offers", offer.id));
+                await updateDoc(listingRef, { offerCount: increment(-1) });
+              } catch (err) {
+                alert("삭제 중 오류: " + err.message);
+              }
+            });
+
+            actions.appendChild(editBtn);
+            actions.appendChild(delBtn);
+            item.appendChild(actions);
+          }
+        }
+
+        list.appendChild(item);
+      });
+
+      offerListEl.innerHTML = "";
+      offerListEl.appendChild(list);
+    }
+
+    onSnapshot(
+      listingRef,
+      (snap) => {
         if (!snap.exists()) {
           detailEl.innerHTML = `
             <div class="empty-state">
@@ -103,100 +328,16 @@
               <p class="empty-state__desc">삭제되었거나 존재하지 않는 글입니다.</p>
             </div>
           `;
+          offerSection.style.display = "none";
           return;
         }
-
-        const data = snap.data();
-        document.title = `${data.job} 판매글 — 그림자 경매`;
-
-        detailEl.innerHTML = `
-          <div class="section-head">
-            <div>
-              <h2>${data.job}</h2>
-              <p>판매자 ${data.sellerName || "익명"}</p>
-            </div>
-          </div>
-          <div class="form-card">
-            <div class="field">
-              <span class="field__label">판매 수량</span>
-              <div>${data.qty ?? "?"}장</div>
-            </div>
-            <div class="field">
-              <span class="field__label">원하는 조건</span>
-              <div>${data.condition ? data.condition : "특별한 조건 없음"}</div>
-            </div>
-          </div>
-        `;
-
+        listingData = snap.data();
+        renderDetail();
         offerSection.style.display = "block";
-
-        // 제안 목록 실시간 표시
-        const offersQuery = query(
-          collection(db, "auctionListings", listingId, "offers"),
-          orderBy("createdAt", "asc")
-        );
-
-        onSnapshot(offersQuery, (snapshot) => {
-          if (snapshot.empty) {
-            offerListEl.innerHTML = `
-              <div class="empty-state">
-                <p class="empty-state__title">아직 들어온 제안이 없습니다.</p>
-                <p class="empty-state__desc">첫 제안을 걸어보세요.</p>
-              </div>
-            `;
-            return;
-          }
-
-          const list = document.createElement("div");
-          list.className = "listing-list";
-
-          snapshot.forEach((offerSnap) => {
-            const offer = offerSnap.data();
-            const item = document.createElement("div");
-            item.className = "listing-item";
-            item.innerHTML = `
-              <div>
-                <div class="listing-item__seller">${offer.offererName || "익명"}</div>
-                <div class="listing-item__qty">${offer.offerDesc || ""}</div>
-              </div>
-            `;
-            list.appendChild(item);
-          });
-
-          offerListEl.innerHTML = "";
-          offerListEl.appendChild(list);
-        });
-
-        // 제안 등록
-        const offerForm = document.getElementById("offerForm");
-        const submitBtn = offerForm.querySelector("button[type=submit]");
-
-        offerForm.addEventListener("submit", async (e) => {
-          e.preventDefault();
-          submitBtn.disabled = true;
-          submitBtn.textContent = "등록 중...";
-
-          const offererName = document.getElementById("offererName").value.trim();
-          const offerDesc = document.getElementById("offerDesc").value.trim();
-
-          try {
-            await addDoc(collection(db, "auctionListings", listingId, "offers"), {
-              offererName,
-              offerDesc,
-              createdAt: serverTimestamp(),
-            });
-            await updateDoc(listingRef, { offerCount: increment(1) });
-            offerForm.reset();
-          } catch (err) {
-            console.error(err);
-            alert("제안 등록 중 오류가 발생했습니다: " + err.message);
-          } finally {
-            submitBtn.disabled = false;
-            submitBtn.textContent = "제안 등록";
-          }
-        });
-      })
-      .catch((err) => {
+        renderOfferFormState();
+        renderOffersList(latestOffers);
+      },
+      (err) => {
         console.error(err);
         detailEl.innerHTML = `
           <div class="empty-state">
@@ -204,9 +345,49 @@
             <p class="empty-state__desc">${err.message}</p>
           </div>
         `;
-      });
+      }
+    );
+
+    const offersQuery = query(
+      collection(db, "auctionListings", listingId, "offers"),
+      orderBy("createdAt", "asc")
+    );
+
+    onSnapshot(offersQuery, (snapshot) => {
+      const offers = [];
+      snapshot.forEach((s) => offers.push({ id: s.id, ...s.data() }));
+      renderOffersList(offers);
+    });
+
+    offerForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (!currentUser || !listingData || listingData.status === "closed") return;
+
+      const submitBtn = offerForm.querySelector("button[type=submit]");
+      submitBtn.disabled = true;
+      submitBtn.textContent = "등록 중...";
+
+      const offerDesc = document.getElementById("offerDesc").value.trim();
+
+      try {
+        await addDoc(collection(db, "auctionListings", listingId, "offers"), {
+          offererUid: currentUser.uid,
+          offererGameId: currentGameId,
+          offerDesc,
+          createdAt: serverTimestamp(),
+        });
+        await updateDoc(listingRef, { offerCount: increment(1) });
+        offerForm.reset();
+      } catch (err) {
+        console.error(err);
+        alert("제안 등록 중 오류가 발생했습니다: " + err.message);
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "제안 등록";
+      }
+    });
   }
 </script>
 
 </body>
-  </html>
+</html>
