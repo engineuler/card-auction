@@ -79,12 +79,13 @@
         const item = document.createElement("a");
         item.className = "listing-item";
         item.href = `detail.html?id=${docSnap.id}`;
+        const closed = data.status === "closed";
         item.innerHTML = `
           <div>
-            <div class="listing-item__seller">${data.sellerName || "익명"}</div>
+            <div class="listing-item__seller">${data.sellerGameId || data.sellerName || "익명"} ${closed ? '<span class="badge badge--closed">마감</span>' : ""}</div>
             <div class="listing-item__qty">판매 수량 ${data.qty ?? "?"}장</div>
           </div>
-          <div class="listing-item__offers">제안 ${data.offerCount ?? 0}건</div>
+          <div class="listing-item__offers">${closed ? "낙찰 완료" : `제안 ${data.offerCount ?? 0}건`}</div>
         `;
         list.appendChild(item);
       });
